@@ -169,6 +169,11 @@ _ResourceSaver::_ResourceSaver() {
 
 /////////////////OS
 
+String _OS::get_stdin_string(const bool &p_block) const {
+
+	return OS::get_singleton()->get_stdin_string(p_block);
+}
+
 Point2 _OS::get_mouse_pos() const {
 
 	return OS::get_singleton()->get_mouse_pos();
@@ -1050,6 +1055,7 @@ void _OS::_bind_methods() {
 
 	ObjectTypeDB::bind_method(_MD("has_touchscreen_ui_hint"), &_OS::has_touchscreen_ui_hint);
 
+	ObjectTypeDB::bind_method(_MD("get_stdin_string", "block"), &_OS::get_stdin_string);
 	ObjectTypeDB::bind_method(_MD("set_window_title", "title"), &_OS::set_window_title);
 
 	ObjectTypeDB::bind_method(_MD("set_low_processor_usage_mode", "enable"), &_OS::set_low_processor_usage_mode);

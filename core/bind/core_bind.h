@@ -121,6 +121,7 @@ public:
 	};
 
 	Point2 get_mouse_pos() const;
+	String get_stdin_string(const bool &p_block) const;
 	void set_window_title(const String &p_title);
 	int get_mouse_button_state() const;
 

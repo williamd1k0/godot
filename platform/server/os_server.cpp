@@ -146,6 +146,9 @@ Point2 OS_Server::get_mouse_pos() const {
 	return Point2();
 }
 
+void OS_Server::get_stdin_string(const bool &p_block) {
+}
+
 void OS_Server::set_window_title(const String &p_title) {
 }
 
