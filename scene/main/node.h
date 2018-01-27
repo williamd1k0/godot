@@ -49,7 +49,8 @@ public:
 
 		PAUSE_MODE_INHERIT,
 		PAUSE_MODE_STOP,
-		PAUSE_MODE_PROCESS
+		PAUSE_MODE_PROCESS,
+		PAUSE_MODE_LAYER
 	};
 
 	enum DuplicateFlags {
@@ -65,6 +66,8 @@ public:
 	};
 
 private:
+
+
 	struct GroupData {
 
 		bool persistent;
@@ -102,6 +105,7 @@ private:
 
 		PauseMode pause_mode;
 		Node *pause_owner;
+		uint32_t pause_layer;
 		// variables used to properly sort the node when processing, ignored otherwise
 		//should move all the stuff below to bits
 		bool fixed_process;
@@ -301,6 +305,12 @@ public:
 	void set_pause_mode(PauseMode p_mode);
 	PauseMode get_pause_mode() const;
 	bool can_process() const;
+
+	void set_pause_layer(uint32_t p_mask);
+	uint32_t get_pause_layer() const;
+
+	void set_pause_layer_bit(int p_bit, bool p_value);
+	bool get_pause_layer_bit(int p_bit) const;
 
 	static void print_stray_nodes();
 

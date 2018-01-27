@@ -94,6 +94,7 @@ private:
 	bool debug_navigation_hint;
 #endif
 	bool pause;
+	uint32_t pause_mask;
 	int root_lock;
 
 	Map<StringName, Group> group_map;
@@ -285,6 +286,8 @@ public:
 #endif
 
 	void set_pause(bool p_enabled);
+	void set_pause_mask(uint32_t p_mask);
+	uint32_t get_pause_mask() const;
 	bool is_paused() const;
 
 	void set_camera(const RID &p_camera);

@@ -396,11 +396,36 @@ void Node::_propagate_pause_owner(Node *p_owner) {
 	}
 }
 
+void Node::set_pause_layer(uint32_t p_mask) {
+
+	data.pause_layer = p_mask;
+}
+
+uint32_t Node::get_pause_layer() const {
+
+	return data.pause_layer;
+}
+
+void Node::set_pause_layer_bit(int p_bit, bool p_value) {
+
+	uint32_t mask = get_pause_layer();
+	if (p_value)
+		mask |= 1 << p_bit;
+	else
+		mask &= ~(1 << p_bit);
+	set_pause_layer(mask);
+}
+
+bool Node::get_pause_layer_bit(int p_bit) const {
+
+	return get_pause_layer() & (1 << p_bit);
+}
+
 bool Node::can_process() const {
 
 	ERR_FAIL_COND_V(!is_inside_tree(), false);
 
-	if (get_tree()->is_paused()) {
+	if (get_tree()->is_paused() || get_tree()->get_pause_mask() != 0) {
 
 		if (data.pause_mode == PAUSE_MODE_STOP)
 			return false;
@@ -416,6 +441,14 @@ bool Node::can_process() const {
 
 			if (data.pause_owner->data.pause_mode == PAUSE_MODE_STOP)
 				return false;
+			if (data.pause_owner->data.pause_mode == PAUSE_MODE_LAYER)
+				return !(get_tree()->get_pause_mask() & get_pause_layer());
+		}
+		if (data.pause_mode == PAUSE_MODE_LAYER) {
+			
+			print_line("LAYER NOT IMPLEMENTED YET!?");
+			print_line(itos(get_tree()->get_pause_mask()) +" - "+ itos(get_pause_layer()));
+			return !(get_tree()->get_pause_mask() & get_pause_layer());
 		}
 	}
 
@@ -2111,8 +2144,14 @@ void Node::_bind_methods() {
 	ObjectTypeDB::bind_method(_MD("is_processing_unhandled_input"), &Node::is_processing_unhandled_input);
 	ObjectTypeDB::bind_method(_MD("set_process_unhandled_key_input", "enable"), &Node::set_process_unhandled_key_input);
 	ObjectTypeDB::bind_method(_MD("is_processing_unhandled_key_input"), &Node::is_processing_unhandled_key_input);
+
 	ObjectTypeDB::bind_method(_MD("set_pause_mode", "mode"), &Node::set_pause_mode);
 	ObjectTypeDB::bind_method(_MD("get_pause_mode"), &Node::get_pause_mode);
+	ObjectTypeDB::bind_method(_MD("set_pause_layer", "pause_layer"), &Node::set_pause_layer);
+	ObjectTypeDB::bind_method(_MD("get_pause_layer"), &Node::get_pause_layer);
+	ObjectTypeDB::bind_method(_MD("set_pause_layer_bit", "bit", "value"), &Node::set_pause_layer_bit);
+	ObjectTypeDB::bind_method(_MD("get_pause_layer_bit", "bit"), &Node::get_pause_layer_bit);
+
 	ObjectTypeDB::bind_method(_MD("can_process"), &Node::can_process);
 	ObjectTypeDB::bind_method(_MD("print_stray_nodes"), &Node::_print_stray_nodes);
 	ObjectTypeDB::bind_method(_MD("get_position_in_parent"), &Node::get_position_in_parent);
@@ -2156,6 +2195,7 @@ void Node::_bind_methods() {
 	BIND_CONSTANT(PAUSE_MODE_INHERIT);
 	BIND_CONSTANT(PAUSE_MODE_STOP);
 	BIND_CONSTANT(PAUSE_MODE_PROCESS);
+	BIND_CONSTANT(PAUSE_MODE_LAYER);
 
 	BIND_CONSTANT(DUPLICATE_SIGNALS);
 	BIND_CONSTANT(DUPLICATE_GROUPS);
@@ -2169,7 +2209,8 @@ void Node::_bind_methods() {
 	//	ADD_PROPERTYNZ( PropertyInfo( Variant::BOOL, "process/fixed_process" ), _SCS("set_fixed_process"),_SCS("is_fixed_processing") );
 	//ADD_PROPERTYNZ( PropertyInfo( Variant::BOOL, "process/input" ), _SCS("set_process_input"),_SCS("is_processing_input" ) );
 	//ADD_PROPERTYNZ( PropertyInfo( Variant::BOOL, "process/unhandled_input" ), _SCS("set_process_unhandled_input"),_SCS("is_processing_unhandled_input" ) );
-	ADD_PROPERTYNZ(PropertyInfo(Variant::INT, "process/pause_mode", PROPERTY_HINT_ENUM, "Inherit,Stop,Process"), _SCS("set_pause_mode"), _SCS("get_pause_mode"));
+	ADD_PROPERTYNZ(PropertyInfo(Variant::INT, "process/pause_mode", PROPERTY_HINT_ENUM, "Inherit,Stop,Process,Layer"), _SCS("set_pause_mode"), _SCS("get_pause_mode"));
+	ADD_PROPERTYNO(PropertyInfo(Variant::INT, "process/layers", PROPERTY_HINT_ALL_FLAGS), _SCS("set_pause_layer"), _SCS("get_pause_layer"));
 	ADD_PROPERTYNZ(PropertyInfo(Variant::BOOL, "editor/display_folded", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NOEDITOR), _SCS("set_display_folded"), _SCS("is_displayed_folded"));
 
 	BIND_VMETHOD(MethodInfo("_process", PropertyInfo(Variant::REAL, "delta")));
@@ -2203,6 +2244,7 @@ Node::Node() {
 	data.unhandled_input = false;
 	data.unhandled_key_input = false;
 	data.pause_mode = PAUSE_MODE_INHERIT;
+	data.pause_layer = 1;
 	data.pause_owner = NULL;
 	data.parent_owned = false;
 	data.in_constructor = true;

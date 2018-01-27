@@ -781,6 +781,22 @@ void SceneTree::set_pause(bool p_enabled) {
 		get_root()->propagate_notification(p_enabled ? Node::NOTIFICATION_PAUSED : Node::NOTIFICATION_UNPAUSED);
 }
 
+void SceneTree::set_pause_mask(uint32_t p_mask) {
+
+	if (p_mask == pause_mask)
+		return;
+	pause_mask = p_mask;
+	//PhysicsServer::get_singleton()->set_active(!p_enabled);
+	//Physics2DServer::get_singleton()->set_active(!p_enabled);
+	if (get_root())
+		get_root()->propagate_notification(pause_mask !=0 ? Node::NOTIFICATION_PAUSED : Node::NOTIFICATION_UNPAUSED);
+}
+
+uint32_t SceneTree::get_pause_mask() const {
+
+	return pause_mask;
+}
+
 bool SceneTree::is_paused() const {
 
 	return pause;
@@ -1561,6 +1577,8 @@ void SceneTree::_bind_methods() {
 
 	ObjectTypeDB::bind_method(_MD("set_pause", "enable"), &SceneTree::set_pause);
 	ObjectTypeDB::bind_method(_MD("is_paused"), &SceneTree::is_paused);
+	ObjectTypeDB::bind_method(_MD("set_pause_mask", "pause_mask"), &SceneTree::set_pause_mask);
+	ObjectTypeDB::bind_method(_MD("get_pause_mask"), &SceneTree::get_pause_mask);
 	ObjectTypeDB::bind_method(_MD("set_input_as_handled"), &SceneTree::set_input_as_handled);
 	ObjectTypeDB::bind_method(_MD("is_input_handled"), &SceneTree::is_input_handled);
 
@@ -1652,6 +1670,7 @@ SceneTree::SceneTree() {
 	call_lock = 0;
 	root_lock = 0;
 	node_count = 0;
+	pause_mask = 0;
 
 	//create with mainloop
 
