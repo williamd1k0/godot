@@ -207,6 +207,18 @@ void FileSystemDock::_notification(int p_what) {
 			button_tree->connect("pressed", this, "_go_to_tree", varray(), CONNECT_DEFERRED);
 			current_path->connect("text_entered", this, "navigate_to_path");
 
+			file_filter_menu->set_icon(get_icon("Filter", "EditorIcons"));
+			file_filter_type->add_icon_item(get_icon("Animation", "EditorIcons"), "Animation");
+			file_filter_type->add_icon_item(get_icon("AudioStreamSample", "EditorIcons"), "AudioStream");
+			file_filter_type->add_icon_item(get_icon("Font", "EditorIcons"), "Font");
+			file_filter_type->add_icon_item(get_icon("ShaderMaterial", "EditorIcons"), "Material");
+			file_filter_type->add_icon_item(get_icon("PackedScene", "EditorIcons"), "Scene");
+			file_filter_type->add_icon_item(get_icon("Script", "EditorIcons"), "Script");
+			file_filter_type->add_icon_item(get_icon("Shader", "EditorIcons"), "Shader");
+			file_filter_type->add_icon_item(get_icon("ImageTexture", "EditorIcons"), "Texture");
+			file_filter_type->add_icon_item(get_icon("Theme", "EditorIcons"), "Theme");
+			file_filter_menu->get_popup()->set_item_checked(FILTER_MATCH_CASE, false);
+
 			if (EditorFileSystem::get_singleton()->is_scanning()) {
 				_set_scanning_mode();
 			} else {
@@ -419,15 +431,25 @@ void FileSystemDock::_search(EditorFileSystemDirectory *p_path, List<FileInfo> *
 		_search(p_path->get_subdir(i), matches, p_max_items);
 	}
 
-	String match = search_box->get_text().to_lower();
+	String match = search_box->get_text().strip_edges();
+	RegEx re_filter_type("t(?:ype)?:\\s*(\\w+)");
+	Ref<RegExMatch> rem_filter_type = re_filter_type.search(match);
+	String filter_type = "";
+	if (rem_filter_type.is_valid()){
+		match = match.replace(rem_filter_type->get_string(0), "").strip_edges();
+		filter_type = rem_filter_type->get_string(1).to_lower();
+	}
+	bool use_match_case = file_filter_menu->get_popup()->is_item_checked(1);
+
+	if (!use_match_case) match = match.to_lower();
 
 	for (int i = 0; i < p_path->get_file_count(); i++) {
 		String file = p_path->get_file(i);
-
-		if (file.to_lower().find(match) != -1) {
-
+		String file_type = String(p_path->get_file_type(i)).to_lower();
+		if (!use_match_case) file = file.to_lower();
+		if ((file.find(match) != -1 || match == "") && (filter_type == "" || file_type.find(filter_type) != -1)){
 			FileInfo fi;
-			fi.name = file;
+			fi.name = p_path->get_file(i);
 			fi.type = p_path->get_file_type(i);
 			fi.path = p_path->get_file_path(i);
 			fi.import_broken = !p_path->get_file_import_is_valid(i);
@@ -1442,6 +1464,29 @@ void FileSystemDock::_search_changed(const String &p_text) {
 		_update_files(false);
 }
 
+void FileSystemDock::_file_filter_menu_option(int p_id) {
+
+	if (p_id == FILTER_MATCH_CASE)
+		file_filter_menu->get_popup()->toggle_item_checked(FILTER_MATCH_CASE);
+	if (file_list_vb->is_visible())
+		_update_files(false);
+}
+
+void FileSystemDock::_file_filter_type_option(int p_idx) {
+
+	String current_text = search_box->get_text();
+	String new_filter = file_filter_type->get_item_text(p_idx);
+	RegEx re_filter_type("t(?:ype)?:\\s*(\\w+)");
+	Ref<RegExMatch> rem_filter_type = re_filter_type.search(current_text);
+	if (rem_filter_type.is_valid())
+		search_box->set_text(current_text.replace(rem_filter_type->get_string(1), new_filter));
+	else
+		search_box->set_text((current_text+" type:"+new_filter).strip_edges());
+	
+	if (file_list_vb->is_visible())
+		_update_files(false);
+}
+
 void FileSystemDock::_rescan() {
 
 	_set_scanning_mode();
@@ -1868,6 +1913,8 @@ void FileSystemDock::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("_duplicate_operation_confirm"), &FileSystemDock::_duplicate_operation_confirm);
 
 	ClassDB::bind_method(D_METHOD("_search_changed"), &FileSystemDock::_search_changed);
+	ClassDB::bind_method(D_METHOD("_file_filter_menu_option"), &FileSystemDock::_file_filter_menu_option);
+	ClassDB::bind_method(D_METHOD("_file_filter_type_option"), &FileSystemDock::_file_filter_type_option);
 
 	ClassDB::bind_method(D_METHOD("get_drag_data_fw"), &FileSystemDock::get_drag_data_fw);
 	ClassDB::bind_method(D_METHOD("can_drop_data_fw"), &FileSystemDock::can_drop_data_fw);
@@ -2005,6 +2052,19 @@ FileSystemDock::FileSystemDock(EditorNode *p_editor) {
 	button_display_mode = memnew(ToolButton);
 	button_display_mode->set_toggle_mode(true);
 	path_hb->add_child(button_display_mode);
+
+	file_filter_menu = memnew(MenuButton);
+	file_filter_menu->set_tooltip(TTR("Filter search."));
+	path_hb->add_child(file_filter_menu);
+
+	file_filter_type = memnew(PopupMenu);
+	file_filter_type->set_name("FileFilterType");
+	file_filter_menu->get_popup()->add_child(file_filter_type);
+	file_filter_menu->get_popup()->add_submenu_item(TTR("Filter by Resource type"), "FileFilterType", FILTER_BY_TYPE);
+	file_filter_type->connect("index_pressed", this, "_file_filter_type_option");
+	
+	file_filter_menu->get_popup()->add_check_item(TTR("Match case"), FILTER_MATCH_CASE);
+	file_filter_menu->get_popup()->connect("id_pressed", this, "_file_filter_menu_option");
 
 	files = memnew(ItemList);
 	files->set_v_size_flags(SIZE_EXPAND_FILL);

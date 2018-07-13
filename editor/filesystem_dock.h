@@ -51,6 +51,7 @@
 #include "editor_dir_dialog.h"
 #include "editor_file_system.h"
 #include "script_create_dialog.h"
+#include "modules/regex/regex.h"
 
 class EditorNode;
 
@@ -92,6 +93,11 @@ private:
 		FOLDER_COPY_PATH
 	};
 
+	enum FileSearchFilter{
+		FILTER_BY_TYPE,
+		FILTER_MATCH_CASE
+	};
+
 	VBoxContainer *scanning_vb;
 	ProgressBar *scanning_progress;
 	VSplitContainer *split_box;
@@ -104,6 +110,9 @@ private:
 	Button *button_favorite;
 	Button *button_tree;
 	Button *button_display_mode;
+	MenuButton *file_filter_menu;
+	PopupMenu *file_filter_type;
+
 	Button *button_hist_next;
 	Button *button_hist_prev;
 	Button *button_show;
@@ -216,6 +225,9 @@ private:
 	void _dir_rmb_pressed(const Vector2 &p_pos);
 	void _files_list_rmb_select(int p_item, const Vector2 &p_pos);
 	void _rmb_pressed(const Vector2 &p_pos);
+
+	void _file_filter_menu_option(int p_id);
+	void _file_filter_type_option(int p_idx);
 
 	struct FileInfo {
 		String name;
