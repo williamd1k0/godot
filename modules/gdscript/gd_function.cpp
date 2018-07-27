@@ -1366,7 +1366,7 @@ Variant GDFunctionState::_signal_callback(const Variant **p_args, int p_argcount
 		GDFunctionState *gdfs = ret.operator Object *()->cast_to<GDFunctionState>();
 		if (gdfs && gdfs->function == function) {
  			completed = false;
-			gdfs->previous_state = Ref<GDFunctionState>(this);
+			gdfs->first_state = first_state.is_valid() ? first_state : Ref<GDFunctionState>(this);
 		}
 	}
 
@@ -1375,10 +1375,10 @@ Variant GDFunctionState::_signal_callback(const Variant **p_args, int p_argcount
 	state.result = Variant();
 
 	if (completed) {
-		GDFunctionState *state = this;
-		while (state != NULL) {
-			state->emit_signal("completed", ret);
-			state = *(state->previous_state);
+		if (first_state.is_valid()) {
+			first_state->emit_signal("completed", ret);
+		} else {
+			emit_signal("completed", ret);
 		}
 	}
 
@@ -1429,7 +1429,7 @@ Variant GDFunctionState::resume(const Variant &p_arg) {
 		GDFunctionState *gdfs = ret.operator Object *()->cast_to<GDFunctionState>();
 		if (gdfs && gdfs->function == function) {
  			completed = false;
-			gdfs->previous_state = Ref<GDFunctionState>(this);
+			gdfs->first_state = first_state.is_valid() ? first_state : Ref<GDFunctionState>(this);
 		}
 	}
 
@@ -1438,10 +1438,10 @@ Variant GDFunctionState::resume(const Variant &p_arg) {
 	state.result = Variant();
 
 	if (completed) {
-		GDFunctionState *state = this;
-		while (state != NULL) {
-			state->emit_signal("completed", ret);
-			state = *(state->previous_state);
+		if (first_state.is_valid()) {
+			first_state->emit_signal("completed", ret);
+		} else {
+			emit_signal("completed", ret);
 		}
 	}
 

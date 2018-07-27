@@ -189,7 +189,7 @@ class GDFunctionState : public Reference {
 	GDFunction *function;
 	GDFunction::CallState state;
 	Variant _signal_callback(const Variant **p_args, int p_argcount, Variant::CallError &r_error);
-	Ref<GDFunctionState> previous_state;
+	Ref<GDFunctionState> first_state;
 
 protected:
 	static void _bind_methods();
