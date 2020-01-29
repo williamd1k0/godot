@@ -129,6 +129,7 @@ void AnimationPlayerEditor::_notification(int p_what) {
 			onion_skinning->set_icon(get_icon("GuiTabMenu", "EditorIcons"));
 
 			pin->set_icon(get_icon("Pin", "EditorIcons"));
+			track_editor_toggle->set_icon(get_icon("GuiVisibilityVisible", "EditorIcons"));
 
 			tool_anim->add_style_override("normal", get_stylebox("normal", "Button"));
 			track_editor->get_edit_menu()->add_style_override("normal", get_stylebox("normal", "Button"));
@@ -1297,6 +1298,11 @@ void AnimationPlayerEditor::_editor_visibility_changed() {
 	if (is_visible() && animation->get_item_count() > 0) {
 		_start_onion_skinning();
 	}
+
+	if (track_editor->is_visible())
+		track_editor_toggle->set_icon(get_icon("GuiVisibilityVisible", "EditorIcons"));
+	else
+		track_editor_toggle->set_icon(get_icon("GuiVisibilityHidden", "EditorIcons"));
 }
 
 bool AnimationPlayerEditor::_are_onion_layers_valid() {
@@ -1529,6 +1535,11 @@ void AnimationPlayerEditor::_pin_pressed() {
 	EditorNode::get_singleton()->get_scene_tree_dock()->get_tree_editor()->update_tree();
 }
 
+void AnimationPlayerEditor::_track_editor_toggle_pressed() {
+
+	track_editor->set_visible(!track_editor_toggle->is_pressed());
+}
+
 void AnimationPlayerEditor::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("_node_removed"), &AnimationPlayerEditor::_node_removed);
@@ -1569,6 +1580,7 @@ void AnimationPlayerEditor::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("_stop_onion_skinning"), &AnimationPlayerEditor::_stop_onion_skinning);
 
 	ClassDB::bind_method(D_METHOD("_pin_pressed"), &AnimationPlayerEditor::_pin_pressed);
+	ClassDB::bind_method(D_METHOD("_track_editor_toggle_pressed"), &AnimationPlayerEditor::_track_editor_toggle_pressed);
 }
 
 AnimationPlayerEditor *AnimationPlayerEditor::singleton = NULL;
@@ -1707,6 +1719,12 @@ AnimationPlayerEditor::AnimationPlayerEditor(EditorNode *p_editor, AnimationPlay
 	pin->set_tooltip(TTR("Pin AnimationPlayer"));
 	hb->add_child(pin);
 	pin->connect("pressed", this, "_pin_pressed");
+
+	track_editor_toggle = memnew(ToolButton);
+	track_editor_toggle->set_toggle_mode(true);
+	track_editor_toggle->set_tooltip(TTR("Toggle Track Editor"));
+	hb->add_child(track_editor_toggle);
+	track_editor_toggle->connect("pressed", this, "_track_editor_toggle_pressed");
 
 	file = memnew(EditorFileDialog);
 	add_child(file);

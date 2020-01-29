@@ -100,6 +100,7 @@ class AnimationPlayerEditor : public VBoxContainer {
 	ToolButton *onion_toggle;
 	MenuButton *onion_skinning;
 	ToolButton *pin;
+	ToolButton *track_editor_toggle;
 	SpinBox *frame;
 	LineEdit *scale;
 	LineEdit *name;
@@ -215,6 +216,7 @@ class AnimationPlayerEditor : public VBoxContainer {
 	void _stop_onion_skinning();
 
 	void _pin_pressed();
+	void _track_editor_toggle_pressed();
 
 	AnimationPlayerEditor();
 	~AnimationPlayerEditor();
